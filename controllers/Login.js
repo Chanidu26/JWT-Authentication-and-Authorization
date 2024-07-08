@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
-const { generateToken } = require('../utils/authUtil');
+const { generateToken,  generateRefreshToken , verifyToken } = require('../utils/authUtil');
+
 
 async function Login(req, res) {
 
@@ -26,5 +27,21 @@ async function Login(req, res) {
     }
     
 }
+async function Refreshtoken(req, res) {
+    try{
+        const { oldtoken } = req.body;
+        const decodedtoken = verifyToken(oldtoken);
+        const existinguser = await User.findById(decodedtoken.id);
+        if(!existinguser){
+            throw new Error("User not found");
+        }
+        const newtoken = generateRefreshToken(existinguser);
+        res.status(200).json({ token : newtoken });
+    }
+    catch(err){
+        res.status(401).json({ message : "Invalid token" });
+    }
 
-module.exports = { Login };
+}
+
+module.exports = { Login , Refreshtoken };
